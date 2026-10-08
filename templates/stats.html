@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Stats &amp; SQL &middot; Technical Drill{% endblock %}
+
+{% macro pct(v) -%}
+  {%- if v is none -%}<span class="null">&mdash;</span>
+  {%- else -%}
+    {%- set colour = 'var(--green)' if v >= 80 else ('var(--amber)' if v >= 50 else 'var(--red)') -%}
+    <div class="pctcell"><div class="minibar"><div style="width:{{ v }}%;background:{{ colour }}"></div></div><span>{{ v }}%</span></div>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro cell(col, v) -%}
+  {%- if col.endswith('_pct') -%}<td>{{ pct(v) }}</td>
+  {%- elif col.startswith('is_') -%}<td class="num">{{ '&#10003;'|safe if v else '' }}</td>
+  {%- elif col == 'reason' -%}<td><span class="reason {{ v }}">{{ v }}</span></td>
+  {%- elif v is none -%}<td class="num null">&mdash;</td>
+  {%- elif v is number -%}<td class="num">{{ v }}</td>
+  {%- elif col in ('concept', 'most_picked_wrong_answer', 'problem') -%}<td class="wide">{{ v }}</td>
+  {%- else -%}<td>{{ v }}</td>
+  {%- endif -%}
+{%- endmacro %}
+
+{% block side_progress %}
+  {% set seen_pct = (100 * overview.questions_seen / overview.bank_size)|round|int %}
+  <div class="overall" title="Questions answered at least once">
+    <div class="overall-top"><span class="overall-lab">Bank coverage</span><span class="overall-pct">{{ seen_pct }}%</span></div>
+    <div class="bigbar"><div style="width:{{ seen_pct }}%"></div></div>
+    <div class="overall-sub">{{ overview.questions_seen }} of {{ overview.bank_size }} questions seen</div>
+  </div>
+{% endblock %}
+
+{% block side_stats %}
+  <div class="stat"><div class="ic streak">&#128293;</div><div><div class="lab">Streak</div><div class="val">{{ streak.current_streak }}<small> day{{ '' if streak.current_streak == 1 else 's' }}</small></div></div></div>
+  <div class="stat"><div class="ic acc">&#127919;</div><div><div class="lab">All-time accuracy</div><div class="val">{{ overview.overall_accuracy_pct if overview.overall_accuracy_pct is not none else '&mdash;'|safe }}{% if overview.overall_accuracy_pct is not none %}%{% endif %}</div></div></div>
+  <div class="stat"><div class="ic done">&#128218;</div><div><div class="lab">Rounds played</div><div class="val">{{ overview.rounds_played }}</div></div></div>
+{% endblock %}
+
+{% block main %}
+<section class="panel">
+  <div class="eyebrow">Stats &amp; SQL</div>
+  <h1 class="page-title">Every number here is a SQL query.</h1>
+  <p class="page-lead">Each panel below runs one named query from <code>queries.sql</code> against the SQLite database. Open "Show SQL" under any panel to see exactly what produced it.</p>
+  <div class="tiles">
+    <div class="tile"><div class="lab">Answers logged</div><div class="val">{{ overview.total_attempts }}</div></div>
+    <div class="tile"><div class="lab">Accuracy</div><div class="val">{{ overview.overall_accuracy_pct if overview.overall_accuracy_pct is not none else '&mdash;'|safe }}{% if overview.overall_accuracy_pct is not none %}<small>%</small>{% endif %}</div></div>
+    <div class="tile"><div class="lab">Current streak</div><div class="val">{{ streak.current_streak }}<small> days</small></div></div>
+    <div class="tile"><div class="lab">Longest streak</div><div class="val">{{ streak.longest_streak }}<small> days</small></div></div>
+    <div class="tile"><div class="lab">Days practised</div><div class="val">{{ streak.days_practised }}</div></div>
+    <div class="tile"><div class="lab">Avg time / answer</div><div class="val">{{ overview.avg_seconds_per_answer|int if overview.avg_seconds_per_answer is not none else '&mdash;'|safe }}<small>s</small></div></div>
+  </div>
+  {% if streak.longest_streak %}<p class="muted-note">Longest streak: {{ streak.longest_start }} to {{ streak.longest_end }}.</p>{% endif %}
+  <details class="sql"><summary>Show SQL: streak_summary (gaps and islands)</summary><pre>{{ streak_sql }}</pre></details>
+  <details class="sql"><summary>Show SQL: overview</summary><pre>{{ overview_sql }}</pre></details>
+</section>
+
+{% if overview.total_attempts == 0 %}
+<section class="panel"><p class="empty">No answers logged yet. Play a round from the Drill page (or run <code>python3 seed_demo.py</code> for synthetic demo data) and the panels below will fill in.</p></section>
+{% endif %}
+
+{% for p in panels %}
+<section class="panel" id="{{ p.name }}">
+  <h2 class="section-h">{{ p.title }}</h2>
+  <p class="section-sub">{{ p.blurb }} <code>{{ p.name }}</code></p>
+  {% if p.rows %}
+  <div class="table-wrap{% if p.rows|length > 12 %} scroll-y{% endif %}">
+    <table class="data">
+      <tr>{% for c in p.columns %}<th>{{ c.replace('_', ' ') }}</th>{% endfor %}</tr>
+      {% for r in p.rows %}
+      <tr class="{{ 'hl' if r.get('is_current') else '' }}">{% for c in p.columns %}{{ cell(c, r[c]) }}{% endfor %}</tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% else %}
+  <div class="empty">{{ 'No problems found.' if p.name == 'integrity_check' else 'No rows yet.' }}</div>
+  {% endif %}
+  <details class="sql"><summary>Show SQL</summary><pre>{{ p.sql }}</pre></details>
+</section>
+{% endfor %}
+{% endblock %}

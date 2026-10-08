@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{% block title %}Technical Drill{% endblock %}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" aria-label="Progress dashboard">
+    <div class="brand-row">
+      <div class="brand-mark" aria-hidden="true">Td</div>
+      <div>
+        <div class="brand-name">Technical Drill</div>
+        <div class="brand-sub">PE / IB prep &middot; SQL edition</div>
+      </div>
+    </div>
+    <div id="sideProgress">{% block side_progress %}{% endblock %}</div>
+    <div class="stat-stack" id="sideStats">{% block side_stats %}{% endblock %}</div>
+    <nav class="nav" id="sideNav">
+      <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">&#127968; Drill</a>
+      <a href="{{ url_for('stats_page') }}" class="{% if request.endpoint == 'stats_page' %}active{% endif %}">&#128202; Stats &amp; SQL</a>
+    </nav>
+    <div class="side-foot">Questions and answer history live in a local SQLite database. Every statistic is computed by the queries in <code>queries.sql</code>.</div>
+  </aside>
+  <main class="main" id="main">{% block main %}{% endblock %}</main>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>
