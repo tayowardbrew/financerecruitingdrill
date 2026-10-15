@@ -8,6 +8,9 @@ written in SQL**.
 Built with Python Flask + SQLite (stdlib `sqlite3`, no ORM) + plain
 HTML/CSS/vanilla JS. No build step.
 
+**Note:** this is the public-facing version of the question bank and excludes
+any licensed questions.
+
 ## Where this came from (and what's new)
 
 The question bank (311 multiple-choice questions) and the quiz front end come
@@ -26,7 +29,7 @@ the hardcoded array). The question content itself is unchanged.
 ## Run locally
 
 ```bash
-cd tayo-technical-drill-sql
+cd financerecruitingdrill
 python3 -m pip install -r requirements.txt   # Flask only
 python3 migrate.py                           # build drill.db from schema.sql + data/questions.json
 python3 seed_demo.py                         # OPTIONAL: synthetic demo history (see below)
